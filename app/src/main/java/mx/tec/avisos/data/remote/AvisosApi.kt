@@ -37,7 +37,6 @@ interface AvisosApi {
     @POST("avisos")
     suspend fun crearAviso(@Body body: NuevoAvisoBody): AvisoDto
 
-    /** Multipart: el campo se llama `archivo`. Devuelve la clave (`id`) que se manda después en `crearAviso`. */
     @Multipart
     @POST("imagenes")
     suspend fun subirImagen(@Part archivo: MultipartBody.Part): ImagenDto

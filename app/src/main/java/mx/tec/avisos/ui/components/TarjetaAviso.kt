@@ -60,7 +60,6 @@ fun TarjetaAviso(
     cuando: String,
     nuevo: Boolean,
     modifier: Modifier = Modifier,
-    /** Una dirección (String), una `Uri` o null. Se reserva siempre 16:9: la lista no salta al cargar. */
     imagen: Any? = null
 ) {
     val espaciado = AvisosTema.espaciado

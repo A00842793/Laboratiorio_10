@@ -27,6 +27,16 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fotos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/rutas_de_fotos" />
+        </provider>
+
         <!--
           WorkManager se arranca solo con su configuración por omisión, que no sabe
           inyectar dependencias en los workers. Se apaga ese arranque y la

@@ -14,20 +14,8 @@ import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.max
 
-/** No se pudo abrir o decodificar la imagen elegida. */
 class ImagenIlegible : Exception("No se pudo leer la imagen")
 
-/**
- * Reduce una foto ANTES de subirla. Una foto de 4032×3024 pesa unos 2 MB en JPEG,
- * pero en memoria ocupa 4032 × 3024 × 4 bytes ≈ 48 MB: por eso no se decodifica entera.
- *
- *  1. Se leen solo las medidas (`inJustDecodeBounds`): no se reserva ni un píxel.
- *  2. Se decodifica con `inSampleSize` (potencia de 2): el decodificador salta píxeles.
- *  3. Se ajusta al lado máximo exacto y se aplica la orientación EXIF.
- *  4. Se escribe un JPEG NUEVO: sin metadatos, o sea sin GPS, sin fecha, sin modelo de cámara.
- *
- * Todo corre en `Dispatchers.IO`: leer y comprimir bloquea.
- */
 class CompresorDeImagen @Inject constructor(@ApplicationContext private val context: Context) {
 
     suspend fun comprimir(uri: Uri): ByteArray = withContext(Dispatchers.IO) {
@@ -38,7 +26,6 @@ class CompresorDeImagen @Inject constructor(@ApplicationContext private val cont
             val alto = medidas.outHeight
             if (ancho <= 0 || alto <= 0) throw ImagenIlegible()
 
-            // La mayor potencia de 2 que todavía deja el lado largo >= LADO_MAX.
             var muestra = 1
             while (max(ancho, alto) / (muestra * 2) >= LADO_MAX) muestra *= 2
 
@@ -49,7 +36,6 @@ class CompresorDeImagen @Inject constructor(@ApplicationContext private val cont
                 ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
             }
 
-            // Un solo paso: escala al lado máximo y gira lo que diga la orientación.
             val lado = max(leido.width, leido.height)
             val matriz = Matrix().apply {
                 if (lado > LADO_MAX) postScale(LADO_MAX.toFloat() / lado, LADO_MAX.toFloat() / lado)
@@ -84,8 +70,7 @@ class CompresorDeImagen @Inject constructor(@ApplicationContext private val cont
     }
 
     companion object {
-        /** Lado largo máximo, en px. Cambiarlo cambia el peso (y la nitidez) de todo lo que se sube. */
-        const val LADO_MAX = 1280
+                const val LADO_MAX = 1280
         const val CALIDAD = 80
     }
 }

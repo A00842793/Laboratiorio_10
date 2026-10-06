@@ -28,7 +28,6 @@ class AvisosApplication : Application(), Configuration.Provider, SingletonImageL
 
     @Inject lateinit var notificador: Notificador
 
-    /** El cargador de imágenes de Hilt (ver `ImagenesModule`): Coil lo usa en cada `AsyncImage`. */
     @Inject lateinit var imageLoader: dagger.Lazy<ImageLoader>
 
     override val workManagerConfiguration: Configuration

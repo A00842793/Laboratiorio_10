@@ -11,6 +11,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 import mx.tec.avisos.data.AvisosRepository
 import mx.tec.avisos.data.ImagenesRepository
+import mx.tec.avisos.data.imagenes.FotosTemporales
 import mx.tec.avisos.data.imagenes.ImagenIlegible
 import mx.tec.avisos.domain.AvisoValidator
 import retrofit2.HttpException
@@ -19,9 +20,7 @@ import java.io.IOException
 data class PublicarUiState(
     val titulo: String = "",
     val cuerpo: String = "",
-    /** La imagen elegida de la galería, todavía en el teléfono. */
     val imagen: Uri? = null,
-    /** "Subiendo la imagen…" o "Publicando…"; null si no se está enviando nada. */
     val etapa: String? = null,
     val error: String? = null
 ) {
@@ -35,7 +34,8 @@ data class PublicarUiState(
 @HiltViewModel
 class PublicarViewModel @Inject constructor(
     private val avisos: AvisosRepository,
-    private val imagenes: ImagenesRepository
+    private val imagenes: ImagenesRepository,
+    private val fotos: FotosTemporales
 ) : ViewModel() {
 
     var uiState by mutableStateOf(PublicarUiState())
@@ -57,22 +57,23 @@ class PublicarViewModel @Inject constructor(
         uiState = uiState.copy(imagen = null, error = null)
     }
 
+    fun nuevaFoto(): Uri = fotos.nueva()
+
     /** `alTerminar` se llama solo si el servidor aceptó el aviso. Un 403 se queda a la vista. */
     fun publicar(alTerminar: () -> Unit) {
         if (!uiState.puedePublicar) return
         viewModelScope.launch {
             val imagen = uiState.imagen
             try {
-                // Primera petición: la imagen, reducida. Devuelve su clave.
                 val clave = if (imagen != null) {
                     uiState = uiState.copy(etapa = "Subiendo la imagen…", error = null)
                     imagenes.subir(imagen)
                 } else {
                     null
                 }
-                // Segunda petición: el aviso, con la clave.
                 uiState = uiState.copy(etapa = "Publicando…", error = null)
                 avisos.publicar(uiState.titulo, uiState.cuerpo, clave)
+                fotos.limpiar()
                 uiState = uiState.copy(etapa = null)
                 alTerminar()
             } catch (e: ImagenIlegible) {
