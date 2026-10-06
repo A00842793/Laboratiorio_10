@@ -37,7 +37,8 @@ data class AvisoDto(
     val titulo: String,
     val cuerpo: String,
     val autor: String,
-    val createdAt: String
+    val createdAt: String,
+    val imagen: String? = null
 )
 
 @Serializable

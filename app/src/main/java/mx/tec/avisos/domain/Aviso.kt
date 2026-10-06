@@ -6,5 +6,7 @@ data class Aviso(
     val titulo: String,
     val cuerpo: String,
     val autor: String,
-    val creadoEn: String
+    val creadoEn: String,
+    /** La dirección completa de la imagen, o null si el aviso no lleva. */
+    val imagenUrl: String? = null
 )

@@ -68,6 +68,11 @@ dependencies {
     implementation(libs.okhttp.sse)
     implementation(libs.androidx.work.runtime)
 
+    // Imágenes (Práctica 10): Coil para mostrarlas, ExifInterface para leer la orientación antes de reducirlas
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.androidx.exifinterface)
+
     // Hilt (Práctica 9): la librería, el generador de código, y sus piezas para ViewModel y WorkManager
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

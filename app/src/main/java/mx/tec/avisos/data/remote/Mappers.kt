@@ -21,5 +21,6 @@ fun AvisoDto.toDomain() = Aviso(
     titulo = titulo,
     cuerpo = cuerpo,
     autor = autor,
-    creadoEn = createdAt
+    creadoEn = createdAt,
+    imagenUrl = imagen?.let { "${Network.BASE_URL}imagenes/$it" }
 )
