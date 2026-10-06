@@ -1,10 +1,13 @@
 package mx.tec.avisos.data.remote
 
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -33,6 +36,11 @@ interface AvisosApi {
 
     @POST("avisos")
     suspend fun crearAviso(@Body body: NuevoAvisoBody): AvisoDto
+
+    /** Multipart: el campo se llama `archivo`. Devuelve la clave (`id`) que se manda después en `crearAviso`. */
+    @Multipart
+    @POST("imagenes")
+    suspend fun subirImagen(@Part archivo: MultipartBody.Part): ImagenDto
 
     @DELETE("avisos/{id}")
     suspend fun borrarAviso(@Path("id") id: Int): Response<Unit>

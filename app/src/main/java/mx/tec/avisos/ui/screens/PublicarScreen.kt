@@ -2,10 +2,14 @@ package mx.tec.avisos.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,12 +18,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import mx.tec.avisos.R
 import mx.tec.avisos.domain.AvisoValidator
 import mx.tec.avisos.ui.components.BotonPrincipal
 import mx.tec.avisos.ui.components.CampoTexto
@@ -41,6 +50,8 @@ fun PublicarScreen(
     autor: String,
     onTituloChange: (String) -> Unit,
     onCuerpoChange: (String) -> Unit,
+    onGaleria: () -> Unit,
+    onQuitarImagen: () -> Unit,
     onPublicar: () -> Unit,
     onCancelar: () -> Unit,
     modifier: Modifier = Modifier
@@ -62,7 +73,7 @@ fun PublicarScreen(
         // La acción principal abajo, y sube con el teclado: nunca queda tapada.
         bottomBar = {
             BotonPrincipal(
-                texto = if (uiState.enviando) "Publicando…" else "Publicar",
+                texto = uiState.etapa ?: "Publicar",
                 onClick = onPublicar,
                 habilitado = uiState.puedePublicar,
                 cargando = uiState.enviando,
@@ -96,6 +107,18 @@ fun PublicarScreen(
                 lineasMinimas = 4
             )
 
+            // Photo Picker: el selector del sistema. No hace falta ningún permiso.
+            Row(horizontalArrangement = Arrangement.spacedBy(espaciado.sm)) {
+                OutlinedButton(onClick = onGaleria, enabled = !uiState.enviando) {
+                    Icon(painterResource(R.drawable.ic_galeria), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(espaciado.sm))
+                    Text("Galería")
+                }
+                if (uiState.imagen != null) {
+                    TextButton(onClick = onQuitarImagen, enabled = !uiState.enviando) { Text("Quitar") }
+                }
+            }
+
             // El error del servidor: un 403, un 422 que la validación no atrapó,
             // o una caída de red. La pantalla NO se cierra.
             val error = uiState.error
@@ -113,7 +136,9 @@ fun PublicarScreen(
                 cuerpo = uiState.cuerpo.ifBlank { "Así se va a ver tu aviso en el tablón." },
                 autor = autor,
                 cuando = "ahora",
-                nuevo = true
+                nuevo = true,
+                // La imagen elegida, todavía sin reducir ni subir: Coil la lee de la Uri y la ajusta a 16:9.
+                imagen = uiState.imagen
             )
         }
     }
@@ -129,7 +154,8 @@ private fun PublicarPreview() {
                 cuerpo = "El parcial es el jueves a las 10:00 en el salón de siempre. Traigan lápiz."
             ),
             autor = "profe.prueba",
-            onTituloChange = {}, onCuerpoChange = {}, onPublicar = {}, onCancelar = {}
+            onTituloChange = {}, onCuerpoChange = {}, onGaleria = {},
+            onQuitarImagen = {}, onPublicar = {}, onCancelar = {}
         )
     }
 }

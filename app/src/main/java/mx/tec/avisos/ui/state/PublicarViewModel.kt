@@ -1,5 +1,6 @@
 package mx.tec.avisos.ui.state
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import mx.tec.avisos.data.AvisosRepository
+import mx.tec.avisos.data.ImagenesRepository
+import mx.tec.avisos.data.imagenes.ImagenIlegible
 import mx.tec.avisos.domain.AvisoValidator
 import retrofit2.HttpException
 import java.io.IOException
@@ -16,16 +19,24 @@ import java.io.IOException
 data class PublicarUiState(
     val titulo: String = "",
     val cuerpo: String = "",
-    val enviando: Boolean = false,
+    /** La imagen elegida de la galería, todavía en el teléfono. */
+    val imagen: Uri? = null,
+    /** "Subiendo la imagen…" o "Publicando…"; null si no se está enviando nada. */
+    val etapa: String? = null,
     val error: String? = null
 ) {
+    val enviando: Boolean = etapa != null
+
     val puedePublicar: Boolean = AvisoValidator.esValido(titulo, cuerpo) && !enviando
 
     val caracteresRestantes: Int = AvisoValidator.CUERPO_MAX - cuerpo.trim().length
 }
 
 @HiltViewModel
-class PublicarViewModel @Inject constructor(private val repository: AvisosRepository) : ViewModel() {
+class PublicarViewModel @Inject constructor(
+    private val avisos: AvisosRepository,
+    private val imagenes: ImagenesRepository
+) : ViewModel() {
 
     var uiState by mutableStateOf(PublicarUiState())
         private set
@@ -38,19 +49,38 @@ class PublicarViewModel @Inject constructor(private val repository: AvisosReposi
         if (texto.length <= AvisoValidator.CUERPO_MAX) uiState = uiState.copy(cuerpo = texto, error = null)
     }
 
+    fun onImagenElegida(uri: Uri) {
+        uiState = uiState.copy(imagen = uri, error = null)
+    }
+
+    fun quitarImagen() {
+        uiState = uiState.copy(imagen = null, error = null)
+    }
+
     /** `alTerminar` se llama solo si el servidor aceptó el aviso. Un 403 se queda a la vista. */
     fun publicar(alTerminar: () -> Unit) {
         if (!uiState.puedePublicar) return
         viewModelScope.launch {
-            uiState = uiState.copy(enviando = true, error = null)
+            val imagen = uiState.imagen
             try {
-                repository.publicar(uiState.titulo, uiState.cuerpo)
-                uiState = uiState.copy(enviando = false)
+                // Primera petición: la imagen, reducida. Devuelve su clave.
+                val clave = if (imagen != null) {
+                    uiState = uiState.copy(etapa = "Subiendo la imagen…", error = null)
+                    imagenes.subir(imagen)
+                } else {
+                    null
+                }
+                // Segunda petición: el aviso, con la clave.
+                uiState = uiState.copy(etapa = "Publicando…", error = null)
+                avisos.publicar(uiState.titulo, uiState.cuerpo, clave)
+                uiState = uiState.copy(etapa = null)
                 alTerminar()
+            } catch (e: ImagenIlegible) {
+                uiState = uiState.copy(etapa = null, error = "No se pudo leer esa imagen. Elige otra.")
             } catch (e: IOException) {
-                uiState = uiState.copy(enviando = false, error = "No hay conexión. El aviso no se publicó.")
+                uiState = uiState.copy(etapa = null, error = "No hay conexión. El aviso no se publicó.")
             } catch (e: HttpException) {
-                uiState = uiState.copy(enviando = false, error = mensajeDe(e))
+                uiState = uiState.copy(etapa = null, error = mensajeDe(e))
             }
         }
     }

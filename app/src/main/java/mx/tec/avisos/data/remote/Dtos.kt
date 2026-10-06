@@ -42,4 +42,8 @@ data class AvisoDto(
 )
 
 @Serializable
-data class NuevoAvisoBody(val titulo: String, val cuerpo: String)
+data class NuevoAvisoBody(val titulo: String, val cuerpo: String, val imagen: String? = null)
+
+/** Lo que devuelve POST /imagenes: `id` es la clave para mandarla en el aviso. */
+@Serializable
+data class ImagenDto(val id: String, val tipo: String, val bytes: Int)
