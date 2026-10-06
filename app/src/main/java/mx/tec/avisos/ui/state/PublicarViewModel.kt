@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,26 +36,40 @@ data class PublicarUiState(
 class PublicarViewModel @Inject constructor(
     private val avisos: AvisosRepository,
     private val imagenes: ImagenesRepository,
-    private val fotos: FotosTemporales
+    private val fotos: FotosTemporales,
+    private val guardado: SavedStateHandle
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(PublicarUiState())
+    var uiState by mutableStateOf(
+        PublicarUiState(
+            titulo = guardado[TITULO] ?: "",
+            cuerpo = guardado[CUERPO] ?: "",
+            imagen = guardado[IMAGEN]
+        )
+    )
         private set
 
+    private fun editar(nuevo: PublicarUiState) {
+        uiState = nuevo
+        guardado[TITULO] = nuevo.titulo
+        guardado[CUERPO] = nuevo.cuerpo
+        guardado[IMAGEN] = nuevo.imagen
+    }
+
     fun onTituloChange(texto: String) {
-        if (texto.length <= AvisoValidator.TITULO_MAX) uiState = uiState.copy(titulo = texto, error = null)
+        if (texto.length <= AvisoValidator.TITULO_MAX) editar(uiState.copy(titulo = texto, error = null))
     }
 
     fun onCuerpoChange(texto: String) {
-        if (texto.length <= AvisoValidator.CUERPO_MAX) uiState = uiState.copy(cuerpo = texto, error = null)
+        if (texto.length <= AvisoValidator.CUERPO_MAX) editar(uiState.copy(cuerpo = texto, error = null))
     }
 
     fun onImagenElegida(uri: Uri) {
-        uiState = uiState.copy(imagen = uri, error = null)
+        editar(uiState.copy(imagen = uri, error = null))
     }
 
     fun quitarImagen() {
-        uiState = uiState.copy(imagen = null, error = null)
+        editar(uiState.copy(imagen = null, error = null))
     }
 
     fun nuevaFoto(): Uri = fotos.nueva()
@@ -84,5 +99,11 @@ class PublicarViewModel @Inject constructor(
                 uiState = uiState.copy(etapa = null, error = mensajeDe(e))
             }
         }
+    }
+
+    private companion object {
+        const val TITULO = "titulo"
+        const val CUERPO = "cuerpo"
+        const val IMAGEN = "imagen"
     }
 }
