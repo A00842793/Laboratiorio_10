@@ -85,7 +85,7 @@ class CompresorDeImagen @Inject constructor(@ApplicationContext private val cont
 
     companion object {
         /** Lado largo máximo, en px. Cambiarlo cambia el peso (y la nitidez) de todo lo que se sube. */
-        const val LADO_MAX = 1280
-        const val CALIDAD = 80
+        const val LADO_MAX = 1000000
+        const val CALIDAD = 100
     }
 }
