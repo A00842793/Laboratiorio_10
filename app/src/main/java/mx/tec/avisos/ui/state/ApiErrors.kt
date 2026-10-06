@@ -21,6 +21,6 @@ fun mensajeDe(e: HttpException): String {
         403 -> mensaje ?: "No tienes permiso para hacer eso."
         409 -> mensaje ?: "Ese usuario ya existe."
         422 -> mensaje ?: "Los datos no son válidos."
-        else -> "El servidor respondió ${e.code()}."
+        else -> mensaje ?: "El servidor respondió ${e.code()}."
     }
 }
